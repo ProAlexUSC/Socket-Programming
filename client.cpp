@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
     char buf[MAXBUFLEN];
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    char s[INET6_ADDRSTRLEN];
 
     if (argc != 4)
     {
@@ -76,18 +75,13 @@ int main(int argc, char *argv[])
         fprintf(stderr, "client: failed to connect\n");
         return 2;
     }
-
-    inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
-              s, sizeof s);
-    printf("client: connecting to %s\n", s);
-
     freeaddrinfo(servinfo); // all done with this structure
     string map(argv[1]);
     string src(argv[2]);
     string fsize(argv[3]);
     if (send(sockfd, (map + " " + src + " " + fsize).c_str(), MAXBUFLEN, 0) == -1)
         perror("send");
-    struct sockaddr getPort;;
+    struct sockaddr getPort;
     socklen_t len = sizeof(getPort);
     getsockname(sockfd, &getPort, &len);
     printf("The client has sent query to AWS using TCP over port %d: start vertex %s; map %s; file size %s.\n", ((struct sockaddr_in *)&getPort)->sin_port, argv[2], argv[1], argv[3]);
@@ -101,7 +95,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
     buf[numbytes] = '\0';
-    cout<<buf;
+    cout << buf;
     printf("-----------------------------------------------------\n");
     close(sockfd);
     return 0;
