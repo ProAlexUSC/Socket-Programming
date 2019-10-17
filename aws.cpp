@@ -19,7 +19,7 @@ using namespace std;
 #define AWS_TCP_PORT 24472
 #define SERVERA_PORT 21472
 #define SERVERB_PORT 22472
-#define MAXBUFLEN 100
+#define MAXBUFLEN 10000
 #define BACKLOG 10
 
 //cite from beej
@@ -81,7 +81,6 @@ int main(void)
 
     while (true)
     {
-
         addr_len = sizeof their_addr;
         new_tcp_fd = accept(sock_tcp_fd, (struct sockaddr *)&their_addr, &addr_len);
 
@@ -237,6 +236,7 @@ int initialUDPServer()
 }
 int connectWithServerA(string parameters)
 {
+    addr_len = sizeof their_addr;
     int status;
     if ((status = getaddrinfo("127.0.0.1", to_string(SERVERA_PORT).c_str(), &hints_UDP, &UDP_TO_INFO)) != 0)
     {
@@ -251,7 +251,7 @@ int connectWithServerA(string parameters)
     }
     printf("The AWS has sent map ID and starting vertex to server A using UDP over port %d\n", AWS_UDP_PORT);
 
-    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN, 0,
+    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN-1, 0,
                              (struct sockaddr *)&their_addr, &addr_len)) == -1)
     {
         perror("recvfrom");
@@ -269,6 +269,7 @@ int connectWithServerA(string parameters)
 }
 int connectWithServerB(int size, char *buf)
 {
+    addr_len = sizeof their_addr;
     string output;
     output = to_string(size);
     output += "P";
@@ -286,7 +287,7 @@ int connectWithServerB(int size, char *buf)
         exit(1);
     }
     printf("The AWS has sent path length, propagation speed and transmission speed to server B using UDP over port %d.\n", AWS_UDP_PORT);
-    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN, 0,
+    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN-1, 0,
                              (struct sockaddr *)&their_addr, &addr_len)) == -1)
     {
         perror("recvfrom");

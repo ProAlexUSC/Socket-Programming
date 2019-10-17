@@ -15,8 +15,7 @@
 #include <iomanip>
 using namespace std;
 #define SERVERB_PORT 22472
-#define AWS_UDP_PORT 23472
-#define MAXBUFLEN 100
+#define MAXBUFLEN 10000
 
 int initialUDPServer();
 int sendToAws(char *);
@@ -48,12 +47,12 @@ int main(int argc, char const *argv[])
     {
         return status;
     }
-    inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
+    // inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
     printf("The Server B is up and running using UDP on port %d.\n", SERVERB_PORT);
     while (true)
     {
         addr_len = sizeof their_addr;
-        if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN, 0,
+        if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1, 0,
                                  (struct sockaddr *)&their_addr, &addr_len)) == -1)
         {
             perror("recvfrom");
@@ -145,9 +144,9 @@ int sendToAws(char *buf)
         result<<to_string(vertex);
         result<<"\t\t";
         result<<fixed << setprecision(2) << Tt;
-        result<<"\t\t";
+        result<<"\t";
         result << fixed << setprecision(2) << (distance * 1000.0 / prop);
-        result<<"\t\t";
+        result<<"\t";
         result << fixed << setprecision(2) << (Tt + distance * 1000.0 / prop);
         result << "\n";
         indexLineStart = input.find('\n',indexLineStart);
@@ -155,7 +154,7 @@ int sendToAws(char *buf)
     printf("The Server B has finished the calculation of the delays:\n");
     printf("------------------------------------------\n");
     printf("Destination\tDelay\n");
-    cout << aftercalculate.str() << endl;
+    cout << aftercalculate.str();
     printf("------------------------------------------\n");
     if ((numbytes = sendto(sockfd, result.str().c_str(), MAXBUFLEN, 0,
                            (struct sockaddr *)&their_addr, addr_len)) == -1)

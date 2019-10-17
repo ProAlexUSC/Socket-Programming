@@ -17,7 +17,7 @@
 using namespace std;
 #define SERVERA_PORT 21472
 #define AWS_UDP_PORT 23472
-#define MAXBUFLEN 100
+#define MAXBUFLEN 10000
 #define INF 1000000000
 
 void loadData(string inFileName, map<char, vector<vector<int>>> &data);
@@ -53,12 +53,11 @@ int main(int argc, char const *argv[])
     {
         return status;
     }
-    inet_ntop(their_addr.ss_family,
-              get_in_addr((struct sockaddr *)&their_addr),
-              s, sizeof s);
+    // inet_ntop(their_addr.ss_family,
+    //           get_in_addr((struct sockaddr *)&their_addr),
+    //           s, sizeof s);
 
     printf("The Server A is up and running using UDP on port %d.\n", SERVERA_PORT);
-    printf("Map ID\tNum Vertices\tNum Edges\n");
     map<char, vector<vector<int>>> data;
     try
     {
@@ -68,7 +67,8 @@ int main(int argc, char const *argv[])
     {
         fprintf(stderr, "load error!\n");
     }
-    printf("The Server A has constructed a list of %lu maps:\n-------------------------------------------\n", data.size());
+    printf("The Server A has constructed a list of %d maps:\n-------------------------------------------\n", data.size());
+    printf("Map ID\tNum Vertices\tNum Edges\n");
     printData(data);
     printf("------------------------------------------\n");
 

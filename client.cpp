@@ -11,7 +11,7 @@
 #include <string>
 using namespace std;
 
-#define MAXBUFLEN 100
+#define MAXBUFLEN 10000
 #define AWS_TCP_PORT 24472 // the port client will be connecting to
 
 // cite from beej
