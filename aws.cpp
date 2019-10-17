@@ -28,7 +28,7 @@ int sock_udp_fd;             // listen on sock_udp_fd
 int sock_udp_toA_fd;
 struct addrinfo hints_TCP, hints_UDP, *servinfo_TCP, *servinfo_UDP, *p;
 struct sockaddr_storage their_addr; // connector's address information
-socklen_t sin_size;
+socklen_t addr_len;
 struct sigaction sa;
 int yes = 1;
 char s[INET6_ADDRSTRLEN];
@@ -77,12 +77,15 @@ int main(void)
         printf("server: UDP start failed!\n");
         return status;
     }
+    inet_ntop(their_addr.ss_family,
+              get_in_addr((struct sockaddr *)&their_addr),
+              s, sizeof s);
 
     while (true)
     {
 
-        sin_size = sizeof their_addr;
-        new_tcp_fd = accept(sock_tcp_fd, (struct sockaddr *)&their_addr, &sin_size);
+        addr_len = sizeof their_addr;
+        new_tcp_fd = accept(sock_tcp_fd, (struct sockaddr *)&their_addr, &addr_len);
 
         if (new_tcp_fd == -1)
         {
@@ -90,9 +93,6 @@ int main(void)
             continue;
         }
 
-        inet_ntop(their_addr.ss_family,
-                  get_in_addr((struct sockaddr *)&their_addr),
-                  s, sizeof s);
         // printf("server: got connection from %s\n", s);
 
         if (!fork())
@@ -210,7 +210,7 @@ int initialUDPServer()
         if ((sock_udp_fd = socket(p->ai_family, p->ai_socktype,
                                   p->ai_protocol)) == -1)
         {
-            perror("listener: socket");
+            perror("aws listener: socket");
             continue;
         }
         // int enable = 1;
@@ -220,7 +220,7 @@ int initialUDPServer()
         if (::bind(sock_udp_fd, p->ai_addr, p->ai_addrlen) == -1)
         {
             close(sock_udp_fd);
-            perror("listener: bind");
+            perror("aws listener: bind");
             continue;
         }
 
@@ -229,7 +229,7 @@ int initialUDPServer()
 
     if (p == NULL)
     {
-        fprintf(stderr, "listener: failed to bind socket\n");
+        fprintf(stderr, "aws listener: failed to bind socket\n");
         return 2;
     }
 
@@ -272,16 +272,18 @@ int connectWithServerA(string parameters)
         perror("talker aws: sendto");
         exit(1);
     }
-    sin_size = sizeof their_addr;
+    inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s);
+    addr_len = sizeof their_addr;
     if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN - 1, 0,
-                             (struct sockaddr *)&their_addr, &sin_size)) == -1)
+                             (struct sockaddr *)&their_addr, &addr_len)) == -1)
     {
         perror("recvfrom");
         exit(1);
     }
-    printf("sadasd\n\n");
-    string input(buf);
-    printf("%s", input.c_str());
-
+    buf[numbytes] = '\n';
+    printf("The AWS has received shortest path from server A:\n------------------------------------------\n");
+    printf("Destination\tMin Length\n");
+    printf("%s", buf);
+    printf("------------------------------------------\n");
     return 0;
 }

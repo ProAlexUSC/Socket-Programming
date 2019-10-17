@@ -281,12 +281,8 @@ int sendToAws(int *dist, int src)
             perror("talker A: socket");
             continue;
         }
-        int enable = 1;
         break;
     }
-    int enable = 1;
-    if (setsockopt(sock_udp_to_Aws, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-        perror("setsockopt(SO_REUSEADDR) failed");
 
     if (p == NULL)
     {
@@ -308,12 +304,12 @@ int sendToAws(int *dist, int src)
         output += "\n";
     }
     addr_len = sizeof their_addr;
-    if ((numbytes = sendto(sock_udp_to_Aws, "hello", 5, 0,
-                           (struct sockaddr *)&their_addr, addr_len)) == -1)
+    if ((numbytes = sendto(sock_udp_to_Aws, output.c_str(), MAXBUFLEN, 0,
+                          p->ai_addr, p->ai_addrlen)) == -1)
     {
         perror("sendto");
         exit(1);
     }
-
+    printf("The Server A has sent shortest paths to AWS.\n");
     return 0;
 }
