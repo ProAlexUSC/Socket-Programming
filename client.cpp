@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     close(sockfd);
     return 0;
 
-    numbytes = recv(sockfd, buf, MAXBUFLEN - 1, 0);
+    numbytes = recv(sockfd, buf, MAXBUFLEN, 0);
     if (numbytes == -1)
     {
         perror("recv");

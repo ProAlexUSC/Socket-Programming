@@ -20,7 +20,7 @@ using namespace std;
 #define MAXBUFLEN 100
 
 int initialUDPServer();
-int sendToAws(int *dist, int src);
+int sendToAws(char *);
 
 // cite from beej
 int sockfd;
@@ -54,7 +54,7 @@ int main(int argc, char const *argv[])
     while (true)
     {
         addr_len = sizeof their_addr;
-        if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN - 1, 0,
+        if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN, 0,
                                  (struct sockaddr *)&their_addr, &addr_len)) == -1)
         {
             perror("recvfrom");
@@ -62,8 +62,7 @@ int main(int argc, char const *argv[])
         }
         printf("The Server B has received data for calculation:\n");
         buf[numbytes] = '\0';
-        printf("%s", buf);
-        // sendToAws();// TODO
+        sendToAws(buf); // TODO
         printf("The Server B has sent shortest paths to AWS.");
     }
     // close(sockfd);
@@ -114,26 +113,21 @@ int initialUDPServer()
     return 0;
 }
 
-// int sendToAws(int *dist, int src)
+// int sendToAws(char *buf)
 // {
+//     // calculate
+//     string input(buf);
+//     int size = stoi(input.substr(0, input.find("P")));
+//     int prop = stoi(input.substr(input.find("P") + 1, input.find("T")));
+//     int trans = stoi(input.substr(input.find("T") + 1, input.find("D")));
+
 //     string output;
-//     for (int i = 0; i < 10; i++)
-//     {
-//         if (dist[i] == INF || i == src)
-//         {
-//             continue;
-//         }
-//         output += to_string(i);
-//         output += "\t\t";
-//         output += to_string(dist[i]);
-//         output += "\n";
-//     }
 //     if ((numbytes = sendto(sockfd, output.c_str(), MAXBUFLEN, 0,
 //                            (struct sockaddr *)&their_addr, addr_len)) == -1)
 //     {
 //         perror("sendto");
 //         exit(1);
 //     }
-//     printf("The Server A has sent shortest paths to AWS.\n");
+//     printf("The Server B has finished sending the output to AWS\n");
 //     return 0;
 // }

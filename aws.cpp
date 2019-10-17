@@ -251,7 +251,7 @@ int connectWithServerA(string parameters)
     }
     printf("The AWS has sent map ID and starting vertex to server A using UDP over port %d\n", AWS_UDP_PORT);
 
-    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN - 1, 0,
+    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN, 0,
                              (struct sockaddr *)&their_addr, &addr_len)) == -1)
     {
         perror("recvfrom");
@@ -269,20 +269,24 @@ int connectWithServerA(string parameters)
 }
 int connectWithServerB(int size, char *buf)
 {
+    string output;
+    output = to_string(size);
+    output += "P";
+    output += string(buf);
     int status;
     if ((status = getaddrinfo("127.0.0.1", to_string(SERVERB_PORT).c_str(), &hints_UDP, &UDP_TO_INFO)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
         return 2;
     }
-    if ((numbytes = sendto(sock_udp_fd, buf, MAXBUFLEN, 0,
+    if ((numbytes = sendto(sock_udp_fd, output.c_str(), MAXBUFLEN, 0,
                            UDP_TO_INFO->ai_addr, UDP_TO_INFO->ai_addrlen)) == -1)
     {
         perror("talker aws: sendto");
         exit(1);
     }
     printf("The AWS has sent path length, propagation speed and transmission speed to server B using UDP over port %d.\n", AWS_UDP_PORT);
-    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN - 1, 0,
+    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN, 0,
                              (struct sockaddr *)&their_addr, &addr_len)) == -1)
     {
         perror("recvfrom");
