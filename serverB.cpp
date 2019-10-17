@@ -47,7 +47,6 @@ int main(int argc, char const *argv[])
     {
         return status;
     }
-    // inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
     printf("The Server B is up and running using UDP on port %d.\n", SERVERB_PORT);
     while (true)
     {

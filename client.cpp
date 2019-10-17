@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string>
+#include <iostream>
 using namespace std;
 
 #define MAXBUFLEN 10000
@@ -86,10 +87,19 @@ int main(int argc, char *argv[])
     string fsize(argv[3]);
     if (send(sockfd, (map + " " + src + " " + fsize).c_str(), MAXBUFLEN, 0) == -1)
         perror("send");
-    printf("The client has sent query to AWS using TCP over port %d: start vertex %s; map %s; file size %s.\n", AWS_TCP_PORT, argv[1], argv[0], argv[2]);
+    int port = getsockname(sockfd, (struct sockaddr *)&p->ai_addr, &p->ai_addrlen);
+    printf("The client has sent query to AWS using TCP over port %d: start vertex %s; map %s; file size %s.\n", port, argv[1], argv[0], argv[2]);
     printf("The client has received results from AWS:\n");
     printf("-----------------------------------------------------\n");
     printf("Destination\tMin Length\tTt\tTp\tDelay\n");
+    printf("-----------------------------------------------------\n");
+    if ((numbytes = recv(sockfd, buf, MAXBUFLEN - 1, 0)) == -1)
+    {
+        perror("recv");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    cout << string(buf);
     close(sockfd);
     return 0;
 

@@ -40,7 +40,7 @@ char buf[MAXBUFLEN];
 int initialTCPServer();
 int initialUDPServer();
 int connectWithServerA(string parameters);
-int connectWithServerB(int size, char *buf);
+int connectWithServerB(int size);
 void sigchld_handler(int s)
 {
 
@@ -113,9 +113,16 @@ int main(void)
             size = stol(input.substr(index + 1));
             printf("The client has sent query to AWS using TCP over port %d: start vertex %d; map %c; file size %ld.\n", AWS_TCP_PORT, vertex, mapID, size);
             connectWithServerA(input);
-            connectWithServerB(size, buf);
-            close(new_tcp_fd);
+            char fromServerB[MAXBUFLEN];
+            connectWithServerB(size);
+            if ((send(new_tcp_fd, buf, MAXBUFLEN, 0) == -1))
+            {
+                perror("recv");
+                exit(1);
+            }
 
+            printf("The AWS has sent calculated delay to client using TCP over port %d.", AWS_TCP_PORT);
+            close(new_tcp_fd);
             exit(0);
         }
         close(new_tcp_fd); // parent doesn't need this
@@ -251,7 +258,7 @@ int connectWithServerA(string parameters)
     }
     printf("The AWS has sent map ID and starting vertex to server A using UDP over port %d\n", AWS_UDP_PORT);
 
-    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN-1, 0,
+    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN - 1, 0,
                              (struct sockaddr *)&their_addr, &addr_len)) == -1)
     {
         perror("recvfrom");
@@ -267,7 +274,7 @@ int connectWithServerA(string parameters)
     printf("------------------------------------------\n");
     return 0;
 }
-int connectWithServerB(int size, char *buf)
+int connectWithServerB(int size)
 {
     addr_len = sizeof their_addr;
     string output;
@@ -287,7 +294,7 @@ int connectWithServerB(int size, char *buf)
         exit(1);
     }
     printf("The AWS has sent path length, propagation speed and transmission speed to server B using UDP over port %d.\n", AWS_UDP_PORT);
-    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN-1, 0,
+    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN - 1, 0,
                              (struct sockaddr *)&their_addr, &addr_len)) == -1)
     {
         perror("recvfrom");
