@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo("0.0.0.0", to_string(AWS_TCP_PORT).c_str(), &hints, &servinfo)) != 0)
+    if ((rv = getaddrinfo("127.0.0.1", to_string(AWS_TCP_PORT).c_str(), &hints, &servinfo)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;

@@ -28,6 +28,7 @@ int sock_udp_fd;             // listen on sock_udp_fd
 // int sock_udp_toA_fd;
 struct addrinfo hints_TCP, hints_UDP, *servinfo_TCP, *servinfo_UDP, *p;
 struct sockaddr_storage their_addr; // connector's address information
+struct addrinfo *UDP_TO_INFO;
 socklen_t addr_len;
 struct sigaction sa;
 int yes = 1;
@@ -35,11 +36,11 @@ char s[INET6_ADDRSTRLEN];
 int rv;
 int numbytes;
 char buf[MAXBUFLEN];
-// vector<string> dataFromServerA;
 
 int initialTCPServer();
 int initialUDPServer();
 int connectWithServerA(string parameters);
+int connectWithServerB(int size, char *buf);
 void sigchld_handler(int s)
 {
 
@@ -112,8 +113,8 @@ int main(void)
             vertex = stoi(input.substr(2, index + 1));
             size = stol(input.substr(index + 1));
             printf("The client has sent query to AWS using TCP over port %d: start vertex %d; map %c; file size %ld.\n", AWS_TCP_PORT, vertex, mapID, size);
-            printf("The AWS has sent map ID and starting vertex to server A using UDP over port %d\n", AWS_UDP_PORT);
             connectWithServerA(input);
+            connectWithServerB(size, buf);
             close(new_tcp_fd);
 
             exit(0);
@@ -130,7 +131,7 @@ int initialTCPServer()
     hints_TCP.ai_socktype = SOCK_STREAM; // TCP
     hints_TCP.ai_flags = AI_PASSIVE;     // my ip
 
-    if ((rv = getaddrinfo("0.0.0.0", to_string(AWS_TCP_PORT).c_str(), &hints_TCP, &servinfo_TCP)) != 0)
+    if ((rv = getaddrinfo("127.0.0.1", to_string(AWS_TCP_PORT).c_str(), &hints_TCP, &servinfo_TCP)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
@@ -196,7 +197,7 @@ int initialUDPServer()
     hints_UDP.ai_socktype = SOCK_DGRAM;
     hints_UDP.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo("0.0.0.0", to_string(AWS_UDP_PORT).c_str(), &hints_UDP, &servinfo_UDP)) != 0)
+    if ((rv = getaddrinfo("127.0.0.1", to_string(AWS_UDP_PORT).c_str(), &hints_UDP, &servinfo_UDP)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
@@ -236,19 +237,20 @@ int initialUDPServer()
 }
 int connectWithServerA(string parameters)
 {
-    struct addrinfo *UDPTOA_INFO;
     int status;
-    if ((status = getaddrinfo("0.0.0.0", to_string(SERVERA_PORT).c_str(), &hints_UDP, &UDPTOA_INFO)) != 0)
+    if ((status = getaddrinfo("127.0.0.1", to_string(SERVERA_PORT).c_str(), &hints_UDP, &UDP_TO_INFO)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
         return 2;
     }
     if ((numbytes = sendto(sock_udp_fd, parameters.c_str(), MAXBUFLEN, 0,
-                           UDPTOA_INFO->ai_addr, UDPTOA_INFO->ai_addrlen)) == -1)
+                           UDP_TO_INFO->ai_addr, UDP_TO_INFO->ai_addrlen)) == -1)
     {
         perror("talker aws: sendto");
         exit(1);
     }
+    printf("The AWS has sent map ID and starting vertex to server A using UDP over port %d\n", AWS_UDP_PORT);
+
     if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN - 1, 0,
                              (struct sockaddr *)&their_addr, &addr_len)) == -1)
     {
@@ -258,6 +260,38 @@ int connectWithServerA(string parameters)
     buf[numbytes] = '\n';
     printf("The AWS has received shortest path from server A:\n------------------------------------------\n");
     printf("Destination\tMin Length\n");
+    printf("------------------------------------------\n");
+    string dist(buf);
+    dist = dist.substr(dist.find("D") + 1);
+    printf("%s", dist);
+    printf("------------------------------------------\n");
+    return 0;
+}
+int connectWithServerB(int size, char *buf)
+{
+    int status;
+    if ((status = getaddrinfo("127.0.0.1", to_string(SERVERB_PORT).c_str(), &hints_UDP, &UDP_TO_INFO)) != 0)
+    {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+        return 2;
+    }
+    if ((numbytes = sendto(sock_udp_fd, buf, MAXBUFLEN, 0,
+                           UDP_TO_INFO->ai_addr, UDP_TO_INFO->ai_addrlen)) == -1)
+    {
+        perror("talker aws: sendto");
+        exit(1);
+    }
+    printf("The AWS has sent path length, propagation speed and transmission speed to server B using UDP over port %d.\n", AWS_UDP_PORT);
+    if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN - 1, 0,
+                             (struct sockaddr *)&their_addr, &addr_len)) == -1)
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    printf("The AWS has received delays from server B:\n------------------------------------------\n", AWS_UDP_PORT);
+    printf("Destination\tTt\tTp\tDelay\n");
+    printf("------------------------------------------\n");
     printf("%s", buf);
     printf("------------------------------------------\n");
     return 0;

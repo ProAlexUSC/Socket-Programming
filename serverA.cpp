@@ -25,8 +25,7 @@ void printData(map<char, vector<vector<int>>> &data);
 int initialUDPServer();
 void dijkstra(vector<vector<int>> input, int src, int *dist);
 void printMinDist(int *dist, int src);
-int sendToAws(int *dist, int src);
-
+int sendToAws(int *dist, int src, int prop, int trans);
 // cite from beej
 int sockfd;
 struct addrinfo hints, *servinfo, *p;
@@ -92,10 +91,10 @@ int main(int argc, char const *argv[])
         int dist[10];
         dijkstra(data[mapID], vertex, dist);
         printMinDist(dist, vertex);
-        sendToAws(dist, vertex);
+        sendToAws(dist, vertex, data[mapID][0][0], data[mapID][0][1]);
         printf("The Server A has sent shortest paths to AWS.");
     }
-    close(sockfd);
+    // close(sockfd);
 }
 
 // cite from beej
@@ -107,7 +106,7 @@ int initialUDPServer()
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo("0.0.0.0", to_string(SERVERA_PORT).c_str(), &hints, &servinfo)) != 0)
+    if ((rv = getaddrinfo("127.0.0.1", to_string(SERVERA_PORT).c_str(), &hints, &servinfo)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
@@ -121,7 +120,6 @@ int initialUDPServer()
         {
             perror("listener: socket");
             continue;
-            ;
         }
 
         if (::bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
@@ -263,9 +261,14 @@ void printMinDist(int *dist, int src)
     printf("------------------------------------------\n");
 }
 
-int sendToAws(int *dist, int src)
+int sendToAws(int *dist, int src, int prop, int trans)
 {
     string output;
+    output += to_string(prop);
+    output += "\t";
+    output += to_string(trans);
+    output += "\t";
+
     for (int i = 0; i < 10; i++)
     {
         if (dist[i] == INF || i == src)
@@ -278,7 +281,7 @@ int sendToAws(int *dist, int src)
         output += "\n";
     }
     if ((numbytes = sendto(sockfd, output.c_str(), MAXBUFLEN, 0,
-                          (struct sockaddr *)&their_addr, addr_len)) == -1)
+                           (struct sockaddr *)&their_addr, addr_len)) == -1)
     {
         perror("sendto");
         exit(1);
