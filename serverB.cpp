@@ -116,6 +116,7 @@ int sendToAws(char *buf)
 {
     // calculate
     string input(buf);
+    // cout<<input<<endl;
     int size = stoi(input.substr(0, input.find("P")));
     int prop = stoi(input.substr(input.find("P") + 1, input.find("T")));
     printf("* Propagation speed: %d km/s;\n", prop);
@@ -124,39 +125,39 @@ int sendToAws(char *buf)
     double Tt = 1000 * size / (8.0 * trans);
 
     //calculate line by line
-    int indexLineStart = input.find("D") + 1;
-    int indexLineEnd = input.find("\n");
+    int indexLineStart = input.find("D");
     int delimiter;
     stringstream aftercalculate;
-    stringstream output;
+    stringstream result;
     int vertex;
     int distance;
-    while (indexLineEnd != -1)
+    while (indexLineStart != (input.length()-1))
     {
-        delimiter = input.substr(indexLineStart, indexLineEnd).find("\t\t");
-        vertex = stoi(input.substr(indexLineStart, delimiter));
-        distance = stoi(input.substr(delimiter + 2, indexLineEnd));
+        indexLineStart++;
+        delimiter = input.find("\t\t",indexLineStart);
+        vertex = stoi(input.substr(indexLineStart, delimiter-indexLineStart));
+        distance = stoi(input.substr(delimiter + 2, input.find('\n',indexLineStart)-delimiter-2));
         printf("* Path length for destination %d:%d\n", vertex, distance);
         aftercalculate << to_string(vertex);
         aftercalculate << "\t\t";
-        aftercalculate << fixed << setprecision(2) << (Tt + prop * 1000.0 / distance);
+        aftercalculate << fixed << setprecision(2) << (Tt + distance * 1000.0 / prop);
         aftercalculate << "\n";
-        output<<to_string(vertex);
-        output<<"\t\t";
-        output<<fixed << setprecision(2) << Tt;
-        output << fixed << setprecision(2) << (prop * 1000.0 / distance);
-        output << fixed << setprecision(2) << (Tt + prop * 1000.0 / distance);
-        output << "\n";
-        indexLineStart = indexLineEnd + 1;
-        indexLineEnd = input.find("\n", indexLineStart);
+        result<<to_string(vertex);
+        result<<"\t\t";
+        result<<fixed << setprecision(2) << Tt;
+        result<<"\t\t";
+        result << fixed << setprecision(2) << (distance * 1000.0 / prop);
+        result<<"\t\t";
+        result << fixed << setprecision(2) << (Tt + distance * 1000.0 / prop);
+        result << "\n";
+        indexLineStart = input.find('\n',indexLineStart);
     }
     printf("The Server B has finished the calculation of the delays:\n");
     printf("------------------------------------------\n");
-    printf("Destination\tDelay");
+    printf("Destination\tDelay\n");
     cout << aftercalculate.str() << endl;
     printf("------------------------------------------\n");
-
-    if ((numbytes = sendto(sockfd, output.str().c_str(), MAXBUFLEN, 0,
+    if ((numbytes = sendto(sockfd, result.str().c_str(), MAXBUFLEN, 0,
                            (struct sockaddr *)&their_addr, addr_len)) == -1)
     {
         perror("sendto");
