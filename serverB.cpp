@@ -139,13 +139,13 @@ int sendToAws(char *buf)
         printf("* Path length for destination %d:%d\n", vertex, distance);
         aftercalculate << to_string(vertex);
         aftercalculate << "\t\t";
-        aftercalculate << std::fixed << std::setprecision(2) << (Tt + prop * 1000.0 / distance);
+        aftercalculate << fixed << setprecision(2) << (Tt + prop * 1000.0 / distance);
         aftercalculate << "\n";
         output<<to_string(vertex);
         output<<"\t\t";
-        output<<std::fixed << std::setprecision(2) << Tt;
-        output << std::fixed << std::setprecision(2) << (prop * 1000.0 / distance);
-        output << std::fixed << std::setprecision(2) << (Tt + prop * 1000.0 / distance);
+        output<<fixed << setprecision(2) << Tt;
+        output << fixed << setprecision(2) << (prop * 1000.0 / distance);
+        output << fixed << setprecision(2) << (Tt + prop * 1000.0 / distance);
         output << "\n";
         indexLineStart = indexLineEnd + 1;
         indexLineEnd = input.find("\n", indexLineStart);
