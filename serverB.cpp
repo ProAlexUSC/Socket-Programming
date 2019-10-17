@@ -114,26 +114,26 @@ int initialUDPServer()
     return 0;
 }
 
-int sendToAws(int *dist, int src)
-{
-    string output;
-    for (int i = 0; i < 10; i++)
-    {
-        if (dist[i] == INF || i == src)
-        {
-            continue;
-        }
-        output += to_string(i);
-        output += "\t\t";
-        output += to_string(dist[i]);
-        output += "\n";
-    }
-    if ((numbytes = sendto(sockfd, output.c_str(), MAXBUFLEN, 0,
-                           (struct sockaddr *)&their_addr, addr_len)) == -1)
-    {
-        perror("sendto");
-        exit(1);
-    }
-    printf("The Server A has sent shortest paths to AWS.\n");
-    return 0;
-}
+// int sendToAws(int *dist, int src)
+// {
+//     string output;
+//     for (int i = 0; i < 10; i++)
+//     {
+//         if (dist[i] == INF || i == src)
+//         {
+//             continue;
+//         }
+//         output += to_string(i);
+//         output += "\t\t";
+//         output += to_string(dist[i]);
+//         output += "\n";
+//     }
+//     if ((numbytes = sendto(sockfd, output.c_str(), MAXBUFLEN, 0,
+//                            (struct sockaddr *)&their_addr, addr_len)) == -1)
+//     {
+//         perror("sendto");
+//         exit(1);
+//     }
+//     printf("The Server A has sent shortest paths to AWS.\n");
+//     return 0;
+// }
