@@ -34,17 +34,6 @@ int numbytes;
 struct sockaddr_storage their_addr;
 char buf[MAXBUFLEN];
 socklen_t addr_len;
-char s[INET6_ADDRSTRLEN];
-
-void *get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET)
-    {
-        return &(((struct sockaddr_in *)sa)->sin_addr);
-    }
-
-    return &(((struct sockaddr_in6 *)sa)->sin6_addr);
-}
 
 int main(int argc, char const *argv[])
 {
@@ -53,11 +42,13 @@ int main(int argc, char const *argv[])
     {
         return status;
     }
-    // inet_ntop(their_addr.ss_family,
-    //           get_in_addr((struct sockaddr *)&their_addr),
-    //           s, sizeof s);
-
     printf("The Server A is up and running using UDP on port %d.\n", SERVERA_PORT);
+
+    // use a map to store the map
+    // MapId as the key
+    // the value is a 2 dimensional vector
+    // the first sub vector stores the prop trans and the number of node in order
+    // the rest are the edges. start end and length
     map<char, vector<vector<int>>> data;
     try
     {
@@ -91,7 +82,10 @@ int main(int argc, char const *argv[])
         int dist[10];
         dijkstra(data[mapID], vertex, dist);
         printMinDist(dist, vertex);
-        sendToAws(dist, vertex, data[mapID][0][0], data[mapID][0][1]);
+        if ((status = sendToAws(dist, vertex, data[mapID][0][0], data[mapID][0][1])) != 0)
+        {
+            perror("Can not send To Aws");
+        }
         printf("The Server A has sent shortest paths to AWS.");
     }
     // close(sockfd);
@@ -108,7 +102,7 @@ int initialUDPServer()
 
     if ((rv = getaddrinfo("127.0.0.1", to_string(SERVERA_PORT).c_str(), &hints, &servinfo)) != 0)
     {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        fprintf(stderr, "serverA getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
 
@@ -118,14 +112,14 @@ int initialUDPServer()
         if ((sockfd = socket(p->ai_family, p->ai_socktype,
                              p->ai_protocol)) == -1)
         {
-            perror("listener: socket");
+            perror("serverA listener: socket");
             continue;
         }
 
         if (::bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
         {
             close(sockfd);
-            perror("listener: bind");
+            perror("serverA listener: bind");
             continue;
         }
 
@@ -134,7 +128,7 @@ int initialUDPServer()
 
     if (p == NULL)
     {
-        fprintf(stderr, "listener: failed to bind socket\n");
+        fprintf(stderr, "serverA listener: failed to bind socket\n");
         return 2;
     }
 
@@ -142,8 +136,10 @@ int initialUDPServer()
     return 0;
 }
 
+// load map Data
 void loadData(string inFileName, map<char, vector<vector<int>>> &data)
 {
+    // open file
     ifstream infile;
     infile.open(inFileName);
     string line;
@@ -152,7 +148,8 @@ void loadData(string inFileName, map<char, vector<vector<int>>> &data)
         fprintf(stderr, "map.txt doesn't exist!\n");
         throw "map.txt doesn't exist!\n";
     }
-    int linenumber = 0;
+
+    // parse the Data
     char previousMapID;
     pair<int, int> startAndEng;
     set<int> nodeSet;
@@ -179,25 +176,28 @@ void loadData(string inFileName, map<char, vector<vector<int>>> &data)
         vector<int> newvector(3);
         data[previousMapID].push_back(newvector);
         startNodeIndex = line.find(" ");
-        data[previousMapID][data[previousMapID].size() - 1][0] = stoi(line.substr(0, startNodeIndex));
-        nodeSet.insert(stoi(line.substr(0, startNodeIndex))); // count node
+        data[previousMapID][data[previousMapID].size() - 1][0] = stoi(line.substr(0, startNodeIndex)); // start
+        nodeSet.insert(stoi(line.substr(0, startNodeIndex)));                                          // count node
         endNodeIndex = line.find(" ", startNodeIndex + 1);
-        data[previousMapID][data[previousMapID].size() - 1][1] = stoi(line.substr(startNodeIndex + 1, endNodeIndex));
-        nodeSet.insert(stoi(line.substr(startNodeIndex + 1, endNodeIndex))); // count node
-        data[previousMapID][data[previousMapID].size() - 1][2] = stoi(line.substr(endNodeIndex + 1));
-        data[previousMapID][0][2] = nodeSet.size(); // count node
+        data[previousMapID][data[previousMapID].size() - 1][1] = stoi(line.substr(startNodeIndex + 1, endNodeIndex - startNodeIndex - 1)); // end
+        nodeSet.insert(stoi(line.substr(startNodeIndex + 1, endNodeIndex - startNodeIndex - 1)));                                          // count node
+        data[previousMapID][data[previousMapID].size() - 1][2] = stoi(line.substr(endNodeIndex + 1));                                      // length
+        data[previousMapID][0][2] = nodeSet.size();                                                                                        // count node
     }
-    infile.close();
+    infile.close(); // close the file
 }
 
 void printData(map<char, vector<vector<int>>> &data)
 {
+    // traversal the data and print it!
     for (auto it = data.begin(); it != data.end(); ++it)
     {
         printf("%c\t%d\t\t%d\n", it->first, it->second[0][2], (int)it->second.size() - 1);
     }
 }
 
+// dijkstra!
+// set the output result
 void dijkstra(vector<vector<int>> input, int src, int *result)
 {
     int edges[10][10]; // at most 10 edges
@@ -213,6 +213,7 @@ void dijkstra(vector<vector<int>> input, int src, int *result)
         edges[input[i][0]][input[i][1]] = input[i][2];
         edges[input[i][1]][input[i][0]] = input[i][2];
     }
+    // min distance from the src
     int dist[10];
     for (int i = 0; i < 10; i++)
     {
@@ -223,6 +224,8 @@ void dijkstra(vector<vector<int>> input, int src, int *result)
     for (int i = 0; i < 10; i++)
     {
         int minNum, value = INF;
+
+        // find the nearest node now
         for (int j = 0; j < 10; j++)
         {
             if (!st[j] && dist[j] < value)
@@ -234,18 +237,21 @@ void dijkstra(vector<vector<int>> input, int src, int *result)
         st[minNum] = true;
         for (int j = 0; j < 10; j++)
         {
-            if (j == src)
+            if (j == src) // ignore src
             {
                 continue;
             }
             dist[j] = min(dist[j], dist[minNum] + edges[minNum][j]);
         }
     }
+    // set the result
     for (int i = 0; i < 10; i++)
     {
         result[i] = dist[i];
     }
 }
+
+// print the mindist
 void printMinDist(int *dist, int src)
 {
     printf("The Server A has identified the following shortest paths:\n------------------------------------------\n");
@@ -263,11 +269,12 @@ void printMinDist(int *dist, int src)
 
 int sendToAws(int *dist, int src, int prop, int trans)
 {
+    // format: <prop>T<trans><D>path
     string output;
     output += to_string(prop);
-    output += "T"; // delimiter 
+    output += "T"; // delimiter
     output += to_string(trans);
-    output += "D"; // delimiter 
+    output += "D"; // delimiter
 
     for (int i = 0; i < 10; i++)
     {
@@ -280,10 +287,11 @@ int sendToAws(int *dist, int src, int prop, int trans)
         output += to_string(dist[i]);
         output += "\n";
     }
+    // send the data back
     if ((numbytes = sendto(sockfd, output.c_str(), MAXBUFLEN, 0,
                            (struct sockaddr *)&their_addr, addr_len)) == -1)
     {
-        perror("sendto");
+        perror("serverA:sendto");
         exit(1);
     }
     printf("The Server A has sent shortest paths to AWS.\n");
