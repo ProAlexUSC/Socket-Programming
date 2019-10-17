@@ -25,7 +25,7 @@ using namespace std;
 //cite from beej
 int sock_tcp_fd, new_tcp_fd; // listen on sock_tcp_fd, new connection on new_tcp_fd
 int sock_udp_fd;             // listen on sock_udp_fd
-int sock_udp_toA_fd;
+// int sock_udp_toA_fd;
 struct addrinfo hints_TCP, hints_UDP, *servinfo_TCP, *servinfo_UDP, *p;
 struct sockaddr_storage their_addr; // connector's address information
 socklen_t addr_len;
@@ -77,9 +77,6 @@ int main(void)
         printf("server: UDP start failed!\n");
         return status;
     }
-    inet_ntop(their_addr.ss_family,
-              get_in_addr((struct sockaddr *)&their_addr),
-              s, sizeof s);
 
     while (true)
     {
@@ -127,6 +124,7 @@ int main(void)
 
 int initialTCPServer()
 {
+    inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
     memset(&hints_TCP, 0, sizeof hints_TCP);
     hints_TCP.ai_family = AF_UNSPEC;
     hints_TCP.ai_socktype = SOCK_STREAM; // TCP
@@ -245,35 +243,12 @@ int connectWithServerA(string parameters)
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
         return 2;
     }
-    for (p = UDPTOA_INFO; p != NULL; p = p->ai_next)
-    {
-        if ((sock_udp_toA_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
-        {
-            perror("talker aws: socket");
-            continue;
-        }
-        // int enable = 1;
-        // if (setsockopt(sock_udp_toA_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-        //     perror("setsockopt(SO_REUSEADDR) failed");
-        break;
-    }
-
-    if (p == NULL)
-    {
-        fprintf(stderr, "talker aws: failed to bind socket\n");
-        return 2;
-    }
-
-    freeaddrinfo(UDPTOA_INFO);
-
-    if ((numbytes = sendto(sock_udp_toA_fd, parameters.c_str(), MAXBUFLEN, 0,
-                           p->ai_addr, p->ai_addrlen)) == -1)
+    if ((numbytes = sendto(sock_udp_fd, parameters.c_str(), MAXBUFLEN, 0,
+                           UDPTOA_INFO->ai_addr, UDPTOA_INFO->ai_addrlen)) == -1)
     {
         perror("talker aws: sendto");
         exit(1);
     }
-    inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s);
-    addr_len = sizeof their_addr;
     if ((numbytes = recvfrom(sock_udp_fd, buf, MAXBUFLEN - 1, 0,
                              (struct sockaddr *)&their_addr, &addr_len)) == -1)
     {

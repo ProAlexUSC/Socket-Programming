@@ -129,7 +129,6 @@ int initialUDPServer()
             close(sockfd);
             perror("listener: bind");
             continue;
-            ;
         }
 
         break;
@@ -266,31 +265,6 @@ void printMinDist(int *dist, int src)
 
 int sendToAws(int *dist, int src)
 {
-    int sock_udp_to_Aws;
-    struct addrinfo *UDPTOAWS;
-    int status;
-    if ((status = getaddrinfo("0.0.0.0", to_string(AWS_UDP_PORT).c_str(), &hints, &UDPTOAWS)) != 0)
-    {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
-        return 2;
-    }
-    for (p = UDPTOAWS; p != NULL; p = p->ai_next)
-    {
-        if ((sock_udp_to_Aws = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
-        {
-            perror("talker A: socket");
-            continue;
-        }
-        break;
-    }
-
-    if (p == NULL)
-    {
-        fprintf(stderr, "talker A: failed to bind socket\n");
-        return 2;
-    }
-
-    freeaddrinfo(UDPTOAWS);
     string output;
     for (int i = 0; i < 10; i++)
     {
@@ -303,9 +277,8 @@ int sendToAws(int *dist, int src)
         output += to_string(dist[i]);
         output += "\n";
     }
-    addr_len = sizeof their_addr;
-    if ((numbytes = sendto(sock_udp_to_Aws, output.c_str(), MAXBUFLEN, 0,
-                          p->ai_addr, p->ai_addrlen)) == -1)
+    if ((numbytes = sendto(sockfd, output.c_str(), MAXBUFLEN, 0,
+                          (struct sockaddr *)&their_addr, addr_len)) == -1)
     {
         perror("sendto");
         exit(1);
