@@ -263,7 +263,7 @@ int connectWithServerA(string parameters)
     printf("------------------------------------------\n");
     string dist(buf);
     dist = dist.substr(dist.find("D") + 1);
-    printf("%s", dist);
+    printf("%s", dist.c_str());
     printf("------------------------------------------\n");
     return 0;
 }
@@ -289,7 +289,7 @@ int connectWithServerB(int size, char *buf)
         exit(1);
     }
     buf[numbytes] = '\0';
-    printf("The AWS has received delays from server B:\n------------------------------------------\n", AWS_UDP_PORT);
+    printf("The AWS has received delays from server B:\n------------------------------------------\n");
     printf("Destination\tTt\tTp\tDelay\n");
     printf("------------------------------------------\n");
     printf("%s", buf);
