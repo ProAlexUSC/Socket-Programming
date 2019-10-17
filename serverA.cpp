@@ -60,6 +60,7 @@ int main(int argc, char const *argv[])
     }
     printf("The Server A has constructed a list of %d maps:\n-------------------------------------------\n", data.size());
     printf("Map ID\tNum Vertices\tNum Edges\n");
+    printf("------------------------------------------\n");
     printData(data);
     printf("------------------------------------------\n");
 
@@ -256,6 +257,7 @@ void printMinDist(int *dist, int src)
 {
     printf("The Server A has identified the following shortest paths:\n------------------------------------------\n");
     printf("Destination\tMin Length\n");
+    printf("------------------------------------------\n");
     for (int i = 0; i < 10; i++)
     {
         if (dist[i] == INF || i == src)
