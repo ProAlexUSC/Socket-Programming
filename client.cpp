@@ -87,8 +87,10 @@ int main(int argc, char *argv[])
     string fsize(argv[3]);
     if (send(sockfd, (map + " " + src + " " + fsize).c_str(), MAXBUFLEN, 0) == -1)
         perror("send");
-    int port = getsockname(sockfd, (struct sockaddr *)&p->ai_addr, &p->ai_addrlen);
-    printf("The client has sent query to AWS using TCP over port %d: start vertex %s; map %s; file size %s.\n", port, argv[1], argv[0], argv[2]);
+    struct sockaddr getPort;;
+    socklen_t len = sizeof(getPort);
+    getsockname(sockfd, &getPort, &len);
+    printf("The client has sent query to AWS using TCP over port %d: start vertex %s; map %s; file size %s.\n", ((struct sockaddr_in *)&getPort)->sin_port, argv[2], argv[1], argv[3]);
     printf("The client has received results from AWS:\n");
     printf("-----------------------------------------------------\n");
     printf("Destination\tMin Length\tTt\tTp\tDelay\n");
