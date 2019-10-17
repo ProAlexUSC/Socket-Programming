@@ -126,7 +126,6 @@ int sendToAws(char *buf)
     //calculate line by line
     int indexLineStart = input.find("D") + 1;
     int indexLineEnd = input.find("\n");
-    string line;
     int delimiter;
     stringstream aftercalculate;
     stringstream output;
@@ -135,8 +134,8 @@ int sendToAws(char *buf)
     while (indexLineEnd != -1)
     {
         delimiter = input.substr(indexLineStart, indexLineEnd).find("\t\t");
-        vertex = stoi(line.substr(indexLineStart, delimiter));
-        distance = stoi(line.substr(delimiter + 2, indexLineEnd));
+        vertex = stoi(input.substr(indexLineStart, delimiter));
+        distance = stoi(input.substr(delimiter + 2, indexLineEnd));
         printf("* Path length for destination %d:%d\n", vertex, distance);
         aftercalculate << to_string(vertex);
         aftercalculate << "\t\t";
