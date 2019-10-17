@@ -15,21 +15,11 @@ using namespace std;
 #define MAXBUFLEN 10000
 #define AWS_TCP_PORT 24472 // the port client will be connecting to
 
-// cite from beej
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET)
-    {
-        return &(((struct sockaddr_in *)sa)->sin_addr);
-    }
-
-    return &(((struct sockaddr_in6 *)sa)->sin6_addr);
-}
-
 int main(int argc, char *argv[])
 {
     printf("The client is up and running.\n");
+
+    // need below for socket
     int sockfd, numbytes;
     char buf[MAXBUFLEN];
     struct addrinfo hints, *servinfo, *p;
@@ -45,6 +35,7 @@ int main(int argc, char *argv[])
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
+    // connect to aws
     if ((rv = getaddrinfo("127.0.0.1", to_string(AWS_TCP_PORT).c_str(), &hints, &servinfo)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -79,24 +70,26 @@ int main(int argc, char *argv[])
     string map(argv[1]);
     string src(argv[2]);
     string fsize(argv[3]);
+    // send to aws
     if (send(sockfd, (map + " " + src + " " + fsize).c_str(), MAXBUFLEN, 0) == -1)
         perror("send");
     struct sockaddr getPort;
     socklen_t len = sizeof(getPort);
     getsockname(sockfd, &getPort, &len);
     printf("The client has sent query to AWS using TCP over port %d: start vertex %s; map %s; file size %s.\n", ((struct sockaddr_in *)&getPort)->sin_port, argv[2], argv[1], argv[3]);
-    printf("The client has received results from AWS:\n");
-    printf("-----------------------------------------------------\n");
-    printf("Destination\tMin Length\tTt\tTp\tDelay\n");
-    printf("-----------------------------------------------------\n");
+    // receive data from aws
     if ((numbytes = recv(sockfd, buf, MAXBUFLEN - 1, 0)) == -1)
     {
         perror("recv");
         exit(1);
     }
+    printf("The client has received results from AWS:\n");
+    printf("-----------------------------------------------------\n");
+    printf("Destination\tMin Length\tTt\tTp\tDelay\n");
+    printf("-----------------------------------------------------\n");
     buf[numbytes] = '\0';
     cout << buf;
     printf("-----------------------------------------------------\n");
-    close(sockfd);
+    close(sockfd); // close socket
     return 0;
 }
