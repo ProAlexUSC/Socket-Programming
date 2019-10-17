@@ -267,7 +267,7 @@ int sendToAws(int *dist, int src, int prop, int trans)
     output += to_string(prop);
     output += "\t";
     output += to_string(trans);
-    output += "\t";
+    output += "D"; // delimiter 
 
     for (int i = 0; i < 10; i++)
     {

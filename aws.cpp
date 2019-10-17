@@ -262,7 +262,7 @@ int connectWithServerA(string parameters)
     printf("Destination\tMin Length\n");
     printf("------------------------------------------\n");
     string dist(buf);
-    dist = dist.substr(dist.find("D") + 1);
+    dist = dist.substr(dist.find("D") + 1); // D is the delimiter
     printf("%s", dist.c_str());
     printf("------------------------------------------\n");
     return 0;
