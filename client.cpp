@@ -101,18 +101,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
     buf[numbytes] = '\0';
-    cout << string(buf);
-    close(sockfd);
-    return 0;
-
-    numbytes = recv(sockfd, buf, MAXBUFLEN, 0);
-    if (numbytes == -1)
-    {
-        perror("recv");
-        exit(1);
-    }
-    buf[numbytes] = '\0';
-    printf("%s", buf);
+    cout<<buf;
     printf("-----------------------------------------------------\n");
     close(sockfd);
     return 0;

@@ -13,6 +13,8 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <sstream>
+#include <vector>
 using namespace std;
 
 #define AWS_UDP_PORT 23472
@@ -36,6 +38,8 @@ char s[INET6_ADDRSTRLEN];
 int rv;
 int numbytes;
 char buf[MAXBUFLEN];
+vector<vector<string>> sendToABuf;
+stringstream sendToA;
 
 int initialTCPServer();
 int initialUDPServer();
@@ -115,13 +119,21 @@ int main(void)
             connectWithServerA(input);
             char fromServerB[MAXBUFLEN];
             connectWithServerB(size);
-            if ((send(new_tcp_fd, buf, MAXBUFLEN, 0) == -1))
+            sendToA.str(std::string());
+            for (auto it = sendToABuf.begin(); it != sendToABuf.end(); ++it)
+            {
+                for (auto it2 = it->begin(); it2 != it->end(); ++it2)
+                {
+                    sendToA<<*it2;
+                }
+                sendToA<<"\n";
+            }
+            if ((send(new_tcp_fd, sendToA.str().c_str(), MAXBUFLEN, 0) == -1))
             {
                 perror("recv");
                 exit(1);
             }
-
-            printf("The AWS has sent calculated delay to client using TCP over port %d.", AWS_TCP_PORT);
+            printf("The AWS has sent calculated delay to client using TCP over port %d.\n", AWS_TCP_PORT);
             close(new_tcp_fd);
             exit(0);
         }
@@ -243,6 +255,7 @@ int initialUDPServer()
 }
 int connectWithServerA(string parameters)
 {
+    sendToABuf.clear(); // new buf for sendToA
     addr_len = sizeof their_addr;
     int status;
     if ((status = getaddrinfo("127.0.0.1", to_string(SERVERA_PORT).c_str(), &hints_UDP, &UDP_TO_INFO)) != 0)
@@ -272,6 +285,16 @@ int connectWithServerA(string parameters)
     dist = dist.substr(dist.find("D") + 1); // D is the delimiter
     printf("%s", dist.c_str());
     printf("------------------------------------------\n");
+
+    // For output
+    stringstream stream(dist);
+    string line;
+    while (getline(stream, line))
+    {
+        vector<string> temp;
+        temp.push_back(line + "\t");
+        sendToABuf.push_back(temp);
+    }
     return 0;
 }
 int connectWithServerB(int size)
@@ -306,5 +329,15 @@ int connectWithServerB(int size)
     printf("------------------------------------------\n");
     printf("%s", buf);
     printf("------------------------------------------\n");
+
+    // For output
+    stringstream stream(buf);
+    string line;
+    int vertexIndex = 0;
+    while (getline(stream, line))
+    {
+        sendToABuf[vertexIndex].push_back(line.substr(line.find("\t\t") + 1));
+        vertexIndex++;
+    }
     return 0;
 }
