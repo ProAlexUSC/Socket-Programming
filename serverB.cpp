@@ -11,9 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <map>
-#include <vector>
-#include <set>
+#include <sstream>
 using namespace std;
 #define SERVERB_PORT 22472
 #define AWS_UDP_PORT 23472
@@ -62,7 +60,7 @@ int main(int argc, char const *argv[])
         }
         printf("The Server B has received data for calculation:\n");
         buf[numbytes] = '\0';
-        sendToAws(buf); // TODO
+        sendToAws(buf);
         printf("The Server B has sent shortest paths to AWS.");
     }
     // close(sockfd);
@@ -113,21 +111,57 @@ int initialUDPServer()
     return 0;
 }
 
-// int sendToAws(char *buf)
-// {
-//     // calculate
-//     string input(buf);
-//     int size = stoi(input.substr(0, input.find("P")));
-//     int prop = stoi(input.substr(input.find("P") + 1, input.find("T")));
-//     int trans = stoi(input.substr(input.find("T") + 1, input.find("D")));
+int sendToAws(char *buf)
+{
+    // calculate
+    string input(buf);
+    int size = stoi(input.substr(0, input.find("P")));
+    int prop = stoi(input.substr(input.find("P") + 1, input.find("T")));
+    printf("* Propagation speed: %d km/s;\n", prop);
+    int trans = stoi(input.substr(input.find("T") + 1, input.find("D")));
+    printf("* Transmission speed %d Bytes/s;\n", trans);
+    double Tt = 1000 * size / (8.0 * trans);
 
-//     string output;
-//     if ((numbytes = sendto(sockfd, output.c_str(), MAXBUFLEN, 0,
-//                            (struct sockaddr *)&their_addr, addr_len)) == -1)
-//     {
-//         perror("sendto");
-//         exit(1);
-//     }
-//     printf("The Server B has finished sending the output to AWS\n");
-//     return 0;
-// }
+    //calculate line by line
+    int indexLineStart = input.find("D") + 1;
+    int indexLineEnd = input.find("\n");
+    string line;
+    int delimiter;
+    stringstream aftercalculate;
+    stringstream output;
+    int vertex;
+    int distance;
+    while (indexLineEnd != -1)
+    {
+        delimiter = input.substr(indexLineStart, indexLineEnd).find("\t\t");
+        vertex = stoi(line.substr(indexLineStart, delimiter));
+        distance = stoi(line.substr(delimiter + 2, indexLineEnd));
+        printf("* Path length for destination %d:%d\n", vertex, distance);
+        aftercalculate << to_string(vertex);
+        aftercalculate << "\t\t";
+        aftercalculate << std::fixed << std::setprecision(2) << (Tt + prop * 1000.0 / distance);
+        aftercalculate << "\n";
+        output<<to_string(vertex);
+        output<<"\t\t";
+        output<<std::fixed << std::setprecision(2) << Tt;
+        output << std::fixed << std::setprecision(2) << (prop * 1000.0 / distance);
+        output << std::fixed << std::setprecision(2) << (Tt + prop * 1000.0 / distance);
+        output << "\n";
+        indexLineStart = indexLineEnd + 1;
+        indexLineEnd = input.find("\n", indexLineStart);
+    }
+    printf("The Server B has finished the calculation of the delays:\n");
+    printf("------------------------------------------\n");
+    printf("Destination\tDelay");
+    cout << aftercalculate.str() << endl;
+    printf("------------------------------------------\n");
+
+    if ((numbytes = sendto(sockfd, output.str().c_str(), MAXBUFLEN, 0,
+                           (struct sockaddr *)&their_addr, addr_len)) == -1)
+    {
+        perror("sendto");
+        exit(1);
+    }
+    printf("The Server B has finished sending the output to AWS\n");
+    return 0;
+}
