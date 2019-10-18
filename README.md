@@ -55,6 +55,7 @@ Format:
 
 ## Any idiosyncrasy of your project. It should say under what conditions the project fails, if any.
 If input format error. It will failed. (Anyway, the project says we don't need to check the input error)
+
 If two clients at the same time. I don't consider any mutex. So no multiple thread.
 
 ## Reused Code: Did you use code from anywhere for your project? If not, say so. If so, say what functions and where they're from.
