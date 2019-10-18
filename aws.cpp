@@ -309,7 +309,7 @@ int connectWithServerB(int size)
     addr_len = sizeof their_addr;
     string output;
     output = to_string(size);
-    output += "P"; // P is the delimiter for the path
+    output += "P"; // P is the delimiter for the prop
     output += string(buf);
     // get serverB address
     int status;
