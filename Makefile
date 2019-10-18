@@ -7,14 +7,10 @@ all:
 	g++ -std=c++17 -o serverB serverB.cpp
 clean:
 	rm -f client aws serverA serverB
-.PHONY: serverA
-serverA: serverA
+.PHONY: serverA serverB aws
+serverA:
 	./serverA
-
-.PHONY: serverB
-serverB: serverB
+serverB:
 	./serverB
-
-.PHONY: aws
-aws: aws
+aws: 
 	./aws
