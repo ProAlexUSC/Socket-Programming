@@ -163,7 +163,7 @@ void loadData(string inFileName, map<char, vector<vector<int>>> &data, map<char,
         {
             nodeSet.clear(); // new map IP
             previousMapID = line.at(0);
-            vector<vector<int>> initMap(1, vector<int>(0));
+            vector<vector<int>> initMap(1, vector<int>(1));
             data[previousMapID] = initMap;
             vector<string> initSpeed(2);
             speedData[previousMapID] = initSpeed;
