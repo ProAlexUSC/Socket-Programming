@@ -1,8 +1,10 @@
 {
     "workbench.editor.enablePreview": false,
     "files.associations": {
+        "*.html": "html",
         "ostream": "cpp",
         "string": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "map": "cpp"
     }
 }

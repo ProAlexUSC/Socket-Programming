@@ -109,11 +109,11 @@ int sendToAws(char *buf)
     // format: <size>P<prop>T<trans><D>path
     string input(buf);
     int size = stoi(input.substr(0, input.find("P")));
-    int prop = stoi(input.substr(input.find("P") + 1, input.find("T") - input.find("P") - 1));
-    printf("* Propagation speed: %d km/s;\n", prop);
-    int trans = stoi(input.substr(input.find("T") + 1, input.find("D") - input.find("T") - 1));
-    printf("* Transmission speed %d Bytes/s;\n", trans);
-    double Tt = 1000 * size / (8.0 * trans); //Byte to bit
+    double prop = stod(input.substr(input.find("P") + 1, input.find("T") - input.find("P") - 1));
+    printf("* Propagation speed: %s km/s;\n", input.substr(input.find("P") + 1, input.find("T") - input.find("P") - 1).c_str());
+    double trans = stod(input.substr(input.find("T") + 1, input.find("D") - input.find("T") - 1));
+    printf("* Transmission speed %s Bytes/s;\n", input.substr(input.find("T") + 1, input.find("D") - input.find("T") - 1).c_str());
+    double Tt = 1000 * size / (8 * trans); //Byte to bit
 
     //calculate line by line
     int indexLineStart = input.find("D");
@@ -131,15 +131,15 @@ int sendToAws(char *buf)
         printf("* Path length for destination %d:%d;\n", vertex, distance);
         aftercalculate << to_string(vertex);
         aftercalculate << "\t\t";
-        aftercalculate << fixed << setprecision(2) << (Tt + distance * 1000.0 / prop); // 2 precision
+        aftercalculate << fixed << setprecision(2) << (Tt + distance * 1000 / prop); // 2 precision
         aftercalculate << "\n";
         result << to_string(vertex);
         result << "\t\t";
         result << fixed << setprecision(2) << Tt; // 2 precision
         result << "\t";
-        result << fixed << setprecision(2) << (distance * 1000.0 / prop); // 2 precision
+        result << fixed << setprecision(2) << (distance * 1000 / prop); // 2 precision
         result << "\t";
-        result << fixed << setprecision(2) << (Tt + distance * 1000.0 / prop); // 2 precision
+        result << fixed << setprecision(2) << (Tt + distance * 1000 / prop); // 2 precision
         result << "\n";
         indexLineStart = input.find('\n', indexLineStart);
     }

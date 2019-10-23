@@ -20,12 +20,12 @@ using namespace std;
 #define MAXBUFLEN 10000
 #define INF 1000000000
 
-void loadData(string inFileName, map<char, vector<vector<int>>> &data);
+void loadData(string inFileName, map<char, vector<vector<int>>> &data, map<char, vector<string>> &speedData);
 void printData(map<char, vector<vector<int>>> &data);
 int initialUDPServer();
 void dijkstra(vector<vector<int>> input, int src, int *dist);
 void printMinDist(int *dist, int src);
-int sendToAws(int *dist, int src, int prop, int trans);
+int sendToAws(int *dist, int src, string prop, string trans);
 // cite from beej
 int sockfd;
 struct addrinfo hints, *servinfo, *p;
@@ -49,10 +49,11 @@ int main(int argc, char const *argv[])
     // the value is a 2 dimensional vector
     // the first sub vector stores the prop trans and the number of node in order
     // the rest are the edges. start end and length
-    map<char, vector<vector<int>>> data;
+    map<char, vector<vector<int>>> data; //data store the map distance
+    map<char, vector<string>> speedData;
     try
     {
-        loadData("map.txt", data);
+        loadData("map.txt", data, speedData);
     }
     catch (...)
     {
@@ -83,7 +84,7 @@ int main(int argc, char const *argv[])
         int dist[10];
         dijkstra(data[mapID], vertex, dist);
         printMinDist(dist, vertex);
-        if ((status = sendToAws(dist, vertex, data[mapID][0][0], data[mapID][0][1])) != 0)
+        if ((status = sendToAws(dist, vertex, speedData[mapID][0], speedData[mapID][1])) != 0)
         {
             perror("Can not send To Aws");
         }
@@ -138,7 +139,7 @@ int initialUDPServer()
 }
 
 // load map Data
-void loadData(string inFileName, map<char, vector<vector<int>>> &data)
+void loadData(string inFileName, map<char, vector<vector<int>>> &data, map<char, vector<string>> &speedData)
 {
     // open file
     ifstream infile;
@@ -162,16 +163,18 @@ void loadData(string inFileName, map<char, vector<vector<int>>> &data)
         {
             nodeSet.clear(); // new map IP
             previousMapID = line.at(0);
-            vector<vector<int>> init(1, vector<int>(0));
-            data[previousMapID] = init;
+            vector<vector<int>> initMap(1, vector<int>(0));
+            data[previousMapID] = initMap;
+            vector<string> initSpeed(2);
+            speedData[previousMapID] = initSpeed;
             continue;
             ;
         }
         if (line.find(" ") == string::npos)
         {
-            data[previousMapID][0].push_back(stoi(line)); // prop_speed
+            speedData[previousMapID][0] = line; // prop_speed
             getline(infile, line);
-            data[previousMapID][0].push_back(stoi(line)); // trans_speed
+            speedData[previousMapID][1] = line; // trans_speed
             continue;
         }
         vector<int> newvector(3);
@@ -183,7 +186,7 @@ void loadData(string inFileName, map<char, vector<vector<int>>> &data)
         data[previousMapID][data[previousMapID].size() - 1][1] = stoi(line.substr(startNodeIndex + 1, endNodeIndex - startNodeIndex - 1)); // end
         nodeSet.insert(stoi(line.substr(startNodeIndex + 1, endNodeIndex - startNodeIndex - 1)));                                          // count node
         data[previousMapID][data[previousMapID].size() - 1][2] = stoi(line.substr(endNodeIndex + 1));                                      // length
-        data[previousMapID][0][2] = nodeSet.size();                                                                                        // count node
+        data[previousMapID][0][0] = nodeSet.size();                                                                                        // count node
     }
     infile.close(); // close the file
 }
@@ -193,7 +196,7 @@ void printData(map<char, vector<vector<int>>> &data)
     // traversal the data and print it!
     for (auto it = data.begin(); it != data.end(); ++it)
     {
-        printf("%c\t%d\t\t%d\n", it->first, it->second[0][2], (int)it->second.size() - 1);
+        printf("%c\t%d\t\t%d\n", it->first, it->second[0][0], (int)it->second.size() - 1);
     }
 }
 
@@ -269,13 +272,13 @@ void printMinDist(int *dist, int src)
     printf("------------------------------------------\n");
 }
 
-int sendToAws(int *dist, int src, int prop, int trans)
+int sendToAws(int *dist, int src, string prop, string trans)
 {
     // format: <prop>T<trans><D>path
     string output;
-    output += to_string(prop);
+    output += prop;
     output += "T"; // delimiter
-    output += to_string(trans);
+    output += trans;
     output += "D"; // delimiter
 
     for (int i = 0; i < 10; i++)
