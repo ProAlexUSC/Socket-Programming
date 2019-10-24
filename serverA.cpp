@@ -216,20 +216,26 @@ void dijkstra(vector<vector<int>> input, int src, int *result, vector<int> &redi
         }
     }
     map<int, int> NodeMap;
-    set<int> NodeSet;
+    set<int> NodeSet; // use set to sort the nodes
     int num = 0; // the index of nodes based on 0
     for (int i = 1; i < input.size(); i++)
     {
-        if (NodeMap.find(input[i][0]) == NodeMap.end()) // the first time to meet input[i][0]
+        if (NodeSet.find(input[i][0]) == NodeSet.end()) // the first time to meet input[i][0]
         {
-            NodeMap[input[i][0]] = num++;
-            redirect.push_back(input[i][0]);
+            NodeSet.insert(input[i][0]);
         }
-        if (NodeMap.find(input[i][1]) == NodeMap.end()) // the first time to meet input[i][1]
+        if (NodeSet.find(input[i][1]) == NodeSet.end()) // the first time to meet input[i][1]
         {
-            NodeMap[input[i][1]] = num++;
-            redirect.push_back(input[i][1]);
+            NodeSet.insert(input[i][1]);
         }
+    }
+    for (int node : NodeSet)
+    {
+        NodeMap[node] = num++;
+        redirect.push_back(node);
+    }
+    for (int i = 1; i < input.size(); i++)
+    {
         edges[NodeMap[input[i][0]]][NodeMap[input[i][1]]] = input[i][2];
         edges[NodeMap[input[i][1]]][NodeMap[input[i][0]]] = input[i][2];
     }
