@@ -111,7 +111,7 @@ int main(void)
             string input(buf);
             index = input.find(" ", 2);
             mapID = input.at(0);               // One char mapID
-            vertex = stoi(input.substr(2, 1)); // Only one digit because vertex number is no more than 10
+            vertex = stoi(input.substr(2, index-2)); // Only one digit because vertex number is no more than 10
             size = input.substr(index + 1);
             printf("The AWS has received map ID %c, start vertex %d and file size %s from the client using TCP over port %d\n", mapID, vertex, size.c_str(), AWS_TCP_PORT);
             connectWithServerA(input);
