@@ -81,7 +81,7 @@ int main(int argc, char const *argv[])
         mapID = input.at(0);
         vertex = stoi(input.substr(2, input.find(" ", 2) + 1));
         printf("The Server A has received input for finding shortest paths: starting vertex %d of map %c.\n", vertex, mapID);
-        int dist[10];
+        int dist[100];
         dijkstra(data[mapID], vertex, dist);
         printMinDist(dist, vertex);
         if ((status = sendToAws(dist, vertex, speedData[mapID][0], speedData[mapID][1])) != 0)
@@ -204,10 +204,10 @@ void printData(map<char, vector<vector<int>>> &data)
 // set the output result
 void dijkstra(vector<vector<int>> input, int src, int *result)
 {
-    int edges[10][10]; // at most 10 edges
-    for (int i = 0; i < 10; i++)
+    int edges[100][100]; // at most 100 edges
+    for (int i = 0; i < 100; i++)
     {
-        for (int j = 0; j < 10; j++)
+        for (int j = 0; j < 100; j++)
         {
             edges[i][j] = INF;
         }
@@ -218,19 +218,19 @@ void dijkstra(vector<vector<int>> input, int src, int *result)
         edges[input[i][1]][input[i][0]] = input[i][2];
     }
     // min distance from the src
-    int dist[10];
-    for (int i = 0; i < 10; i++)
+    int dist[100];
+    for (int i = 0; i < 100; i++)
     {
         dist[i] = INF;
     }
     dist[src] = 0;
-    bool st[10];
-    for (int i = 0; i < 10; i++)
+    bool st[100];
+    for (int i = 0; i < 100; i++)
     {
         int minNum, value = INF;
 
         // find the nearest node now
-        for (int j = 0; j < 10; j++)
+        for (int j = 0; j < 100; j++)
         {
             if (!st[j] && dist[j] < value)
             {
@@ -239,7 +239,7 @@ void dijkstra(vector<vector<int>> input, int src, int *result)
             }
         }
         st[minNum] = true;
-        for (int j = 0; j < 10; j++)
+        for (int j = 0; j < 100; j++)
         {
             if (j == src) // ignore src
             {
@@ -249,7 +249,7 @@ void dijkstra(vector<vector<int>> input, int src, int *result)
         }
     }
     // set the result
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 100; i++)
     {
         result[i] = dist[i];
     }
@@ -261,7 +261,7 @@ void printMinDist(int *dist, int src)
     printf("The Server A has identified the following shortest paths:\n------------------------------------------\n");
     printf("Destination\tMin Length\n");
     printf("------------------------------------------\n");
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 100; i++)
     {
         if (dist[i] == INF || i == src)
         {
@@ -281,7 +281,7 @@ int sendToAws(int *dist, int src, string prop, string trans)
     output += trans;
     output += "D"; // delimiter
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 100; i++)
     {
         if (dist[i] == INF || i == src)
         {
