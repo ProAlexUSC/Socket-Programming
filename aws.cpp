@@ -47,7 +47,7 @@ stringstream sendToA;
 int initialTCPServer();
 int initialUDPServer();
 int connectWithServerA(string parameters);
-int connectWithServerB(int size);
+int connectWithServerB(string size);
 
 // For socket
 void sigchld_handler(int s)
@@ -106,14 +106,14 @@ int main(void)
             // parse the data
             char mapID = 0;
             int vertex = 0;
-            long size = 0;
+            string size;
             int index = 0;
             string input(buf);
             index = input.find(" ", 2);
             mapID = input.at(0);               // One char mapID
             vertex = stoi(input.substr(2, 1)); // Only one digit because vertex number is no more than 10
-            size = stol(input.substr(index + 1));
-            printf("The AWS has received map ID %c, start vertex %d and file size %ld from the client using TCP over port %d\n", mapID, vertex, size, AWS_TCP_PORT);
+            size = input.substr(index + 1);
+            printf("The AWS has received map ID %c, start vertex %d and file size %s from the client using TCP over port %d\n", mapID, vertex, size.c_str(), AWS_TCP_PORT);
             connectWithServerA(input);
             char fromServerB[MAXBUFLEN];
             connectWithServerB(size);
@@ -303,12 +303,12 @@ int connectWithServerA(string parameters)
     }
     return 0;
 }
-int connectWithServerB(int size)
+int connectWithServerB(string size)
 {
     // send the distance from A and the file size to B
     addr_len = sizeof their_addr;
     string output;
-    output = to_string(size);
+    output = string(size);
     output += "P"; // P is the delimiter for the prop
     output += string(buf);
     // get serverB address

@@ -108,7 +108,7 @@ int sendToAws(char *buf)
     // calculate the time
     // format: <size>P<prop>T<trans><D>path
     string input(buf);
-    int size = stoi(input.substr(0, input.find("P")));
+    long long size = stoll(input.substr(0, input.find("P")));
     double prop = stod(input.substr(input.find("P") + 1, input.find("T") - input.find("P") - 1));
     printf("* Propagation speed: %s km/s;\n", input.substr(input.find("P") + 1, input.find("T") - input.find("P") - 1).c_str());
     double trans = stod(input.substr(input.find("T") + 1, input.find("D") - input.find("T") - 1));
