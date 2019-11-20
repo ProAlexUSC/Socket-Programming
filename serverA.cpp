@@ -23,9 +23,9 @@ using namespace std;
 void loadData(string inFileName, map<char, vector<vector<int>>> &data, map<char, vector<string>> &speedData);
 void printData(map<char, vector<vector<int>>> &data);
 int initialUDPServer();
-void dijkstra(vector<vector<int>> input, int src, int *dist);
-void printMinDist(int *dist, int src);
-int sendToAws(int *dist, int src, string prop, string trans);
+void dijkstra(vector<vector<int>> input, int src, int *dist, vector<int> &redirect);
+void printMinDist(int *dist, int src, vector<int> redirect);
+int sendToAws(int *dist, int src, string prop, string trans, vector<int> redirect);
 // cite from beej
 int sockfd;
 struct addrinfo hints, *servinfo, *p;
@@ -81,10 +81,13 @@ int main(int argc, char const *argv[])
         mapID = input.at(0);
         vertex = stoi(input.substr(2, input.find(" ", 2) + 1));
         printf("The Server A has received input for finding shortest paths: starting vertex %d of map %c.\n", vertex, mapID);
-        int dist[100];
-        dijkstra(data[mapID], vertex, dist);
-        printMinDist(dist, vertex);
-        if ((status = sendToAws(dist, vertex, speedData[mapID][0], speedData[mapID][1])) != 0)
+        int dist[10];
+        // to redirect the node number to 0-9, for example we have node 453,612, then they are redirect to 0 and 1
+        // that's because I use a 10X10 adjacent matrix
+        vector<int> redirect(0);
+        dijkstra(data[mapID], vertex, dist, redirect);
+        printMinDist(dist, vertex, redirect);
+        if ((status = sendToAws(dist, vertex, speedData[mapID][0], speedData[mapID][1], redirect)) != 0)
         {
             perror("Can not send To Aws");
         }
@@ -202,35 +205,54 @@ void printData(map<char, vector<vector<int>>> &data)
 
 // dijkstra!
 // set the output result
-void dijkstra(vector<vector<int>> input, int src, int *result)
+void dijkstra(vector<vector<int>> input, int src, int *result, vector<int> &redirect)
 {
-    int edges[100][100]; // at most 100 edges
-    for (int i = 0; i < 100; i++)
+    int edges[10][10]; // at most 10 edges
+    for (int i = 0; i < 10; i++)
     {
-        for (int j = 0; j < 100; j++)
+        for (int j = 0; j < 10; j++)
         {
             edges[i][j] = INF;
         }
     }
+    map<int, int> NodeMap;
+    set<int> NodeSet; // use set to sort the nodes
+    int num = 0; // the index of nodes based on 0
     for (int i = 1; i < input.size(); i++)
     {
-        edges[input[i][0]][input[i][1]] = input[i][2];
-        edges[input[i][1]][input[i][0]] = input[i][2];
+        if (NodeSet.find(input[i][0]) == NodeSet.end()) // the first time to meet input[i][0]
+        {
+            NodeSet.insert(input[i][0]);
+        }
+        if (NodeSet.find(input[i][1]) == NodeSet.end()) // the first time to meet input[i][1]
+        {
+            NodeSet.insert(input[i][1]);
+        }
+    }
+    for (int node : NodeSet)
+    {
+        NodeMap[node] = num++;
+        redirect.push_back(node);
+    }
+    for (int i = 1; i < input.size(); i++)
+    {
+        edges[NodeMap[input[i][0]]][NodeMap[input[i][1]]] = input[i][2];
+        edges[NodeMap[input[i][1]]][NodeMap[input[i][0]]] = input[i][2];
     }
     // min distance from the src
-    int dist[100];
-    for (int i = 0; i < 100; i++)
+    int dist[10];
+    for (int i = 0; i < 10; i++)
     {
         dist[i] = INF;
     }
-    dist[src] = 0;
-    bool st[100];
-    for (int i = 0; i < 100; i++)
+    dist[NodeMap[src]] = 0;
+    bool st[10];
+    for (int i = 0; i < 10; i++)
     {
         int minNum, value = INF;
 
         // find the nearest node now
-        for (int j = 0; j < 100; j++)
+        for (int j = 0; j < 10; j++)
         {
             if (!st[j] && dist[j] < value)
             {
@@ -239,9 +261,9 @@ void dijkstra(vector<vector<int>> input, int src, int *result)
             }
         }
         st[minNum] = true;
-        for (int j = 0; j < 100; j++)
+        for (int j = 0; j < 10; j++)
         {
-            if (j == src) // ignore src
+            if (j == NodeMap[src]) // ignore src
             {
                 continue;
             }
@@ -249,30 +271,30 @@ void dijkstra(vector<vector<int>> input, int src, int *result)
         }
     }
     // set the result
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 10; i++)
     {
         result[i] = dist[i];
     }
 }
 
 // print the mindist
-void printMinDist(int *dist, int src)
+void printMinDist(int *dist, int src, vector<int> redirect)
 {
     printf("The Server A has identified the following shortest paths:\n------------------------------------------\n");
     printf("Destination\tMin Length\n");
     printf("------------------------------------------\n");
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 10; i++)
     {
-        if (dist[i] == INF || i == src)
+        if (dist[i] == INF || redirect[i] == src)
         {
             continue;
         }
-        printf("%d\t\t%d\n", i, dist[i]);
+        printf("%d\t\t%d\n", redirect[i], dist[i]);
     }
     printf("------------------------------------------\n");
 }
 
-int sendToAws(int *dist, int src, string prop, string trans)
+int sendToAws(int *dist, int src, string prop, string trans, vector<int> redirect)
 {
     // format: <prop>T<trans><D>path
     string output;
@@ -281,13 +303,13 @@ int sendToAws(int *dist, int src, string prop, string trans)
     output += trans;
     output += "D"; // delimiter
 
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 10; i++)
     {
-        if (dist[i] == INF || i == src)
+        if (dist[i] == INF || redirect[i] == src)
         {
             continue;
         }
-        output += to_string(i);
+        output += to_string(redirect[i]);
         output += "\t\t";
         output += to_string(dist[i]);
         output += "\n";
